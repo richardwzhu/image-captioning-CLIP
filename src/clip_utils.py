@@ -8,6 +8,7 @@ class CLIPDataset(torch.utils.data.Dataset):
                  transforms, config):
         self.image_filenames = image_filenames
         self.captions = list(captions)
+        # Tokenize captions and pad/truncate them to max_length
         self.encoded_captions = tokenizer(
             self.captions, padding=True, truncation=True,
             max_length=config["max_length"]
@@ -15,6 +16,7 @@ class CLIPDataset(torch.utils.data.Dataset):
         self.transforms = transforms
         self.config = config
 
+    # Returns a dictionary with tokenized captions, images, and captions
     def __getitem__(self, idx):
         item = {
             key: torch.tensor(values[idx])
@@ -34,6 +36,7 @@ class CLIPDataset(torch.utils.data.Dataset):
         return len(self.captions)
 
 
+# Transforms and augments images
 def get_transforms(image_size):
     return A.Compose(
         [

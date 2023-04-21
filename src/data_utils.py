@@ -36,6 +36,7 @@ def make_train_valid_dfs(csv_path, train_size):
     return train_df, valid_df
 
 
+# Builds dataloaders for training and validation
 def build_loaders(df, tokenizer, mode, config):
     transforms = get_transforms(config['image_size'])
     dataset = CLIPDataset(
