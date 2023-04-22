@@ -50,3 +50,32 @@ class AvgMeter:
     def __repr__(self):
         text = f"{self.name}: {self.avg:.4f}"
         return text
+
+
+def train_resnet(model, criterion, optimizer, scheduler, data_loaders, device, epochs):
+    for epoch in tqdm(range(epochs), desc='Epochs'):
+
+        model.train()
+        for images, labels in data_loaders['train']:
+            images.to(device)
+            labels.to(device)
+
+            optimizer.zero_grad()
+
+            outputs = model(images)
+            loss = criterion(outputs, labels)
+
+            loss.backward()
+            optimizer.step()
+
+        model.eval()
+        val_loss = 0.0
+        for images, labels in data_loaders['val']:
+            images.to(device)
+            labels.to(device)
+
+            outputs = model(images)
+            loss = criterion(outputs, labels)
+            val_loss += loss.item() * images.size(0)
+
+        scheduler.step(val_loss)
