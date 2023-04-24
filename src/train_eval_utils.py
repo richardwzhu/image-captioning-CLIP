@@ -1,4 +1,4 @@
-from tqdm.autonotebook import tqdm
+from tqdm.auto import tqdm
 
 
 def train_epoch(model, train_loader, optimizer, lr_scheduler, step, device):
