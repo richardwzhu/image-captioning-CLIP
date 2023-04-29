@@ -66,6 +66,7 @@ def get_captions(model, config, image_path, n):
     device = config['device']
     model.eval()
 
+    # Normalize given image
     transforms = get_transforms(config['image_size'])
     image = cv2.imread(image_path)
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
@@ -83,6 +84,7 @@ def get_captions(model, config, image_path, n):
         tokenizer = DistilBertTokenizer.from_pretrained(config['text_tokenizer'])
     else:
         tokenizer = BertTokenizer.from_pretrained(config['text_tokenizer'])
+    # Tokenize all captions from dataframe
     encoded_captions = tokenizer(
         captions, padding=True, truncation=True,
         max_length=config["max_length"]
@@ -91,6 +93,7 @@ def get_captions(model, config, image_path, n):
     captions_dataset = list(zip(encoded_captions.input_ids, encoded_captions.attention_mask))
 
     caption_embeddings = []
+    # Project caption encodings to create embeddings
     for input_id, attention_mask in captions_dataset:
         caption_embedding = model.text_projection(model.text_encoder(
             input_ids=torch.tensor(input_id).to(device).unsqueeze(0),
@@ -100,11 +103,13 @@ def get_captions(model, config, image_path, n):
 
     caption_embeddings = torch.cat(caption_embeddings, dim=0)
 
+    # Calculate cosine similarity scores between image embedding against all caption embeddings
     cosine_similarities = torch.nn.functional.cosine_similarity(
         image_embedding.repeat(caption_embeddings.shape[0], 1),
         caption_embeddings
     )
 
+    # Retrieve captions most similar based on cosine similarity
     top_k_indices = cosine_similarities.argsort(descending=True)[:n]
     top_k_captions = [captions[idx] for idx in top_k_indices]
 
@@ -123,6 +128,7 @@ def get_image_embeddings(model, config):
 
     image_embeddings = []
     with torch.no_grad():
+        # Encode and project image to create embeddings
         for batch in tqdm(data_loader):
             image_features = model.image_encoder(batch["image"].to(config['device']))
             image_embedding = model.image_projection(image_features)
@@ -140,20 +146,25 @@ def find_matches(model, df, image_embeddings, config, query, n=9):
         key: torch.tensor(values).to(config['device'])
         for key, values in encoded_query.items()
     }
+
+    # Encode and project text to create embeddings
     with torch.no_grad():
         text_features = model.text_encoder(
             input_ids=batch["input_ids"], attention_mask=batch["attention_mask"]
         )
         text_embeddings = model.text_projection(text_features)
 
+    # Normalize embeddings and calculate similarity between text and all images
     image_embeddings_n = F.normalize(image_embeddings, p=2, dim=-1)
     text_embeddings_n = F.normalize(text_embeddings, p=2, dim=-1)
     dot_similarity = text_embeddings_n @ image_embeddings_n.T
 
+    # Retrieve images that most match query
     values, indices = torch.topk(dot_similarity.squeeze(0), n * 5)
     image_filenames = list(df.image.values)
     matches = [image_filenames[idx] for idx in indices[::5]]
 
+    # Display images
     _, axes = plt.subplots(3, 3, figsize=(10, 10))
     for match, ax in zip(matches, axes.flatten()):
         image = cv2.imread(f"{config['test_image_path']}/{match}")
