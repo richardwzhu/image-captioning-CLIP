@@ -10,7 +10,7 @@ from transformers import DistilBertConfig, DistilBertModel
 
 class CLIPDataset(torch.utils.data.Dataset):
     def __init__(self, image_filenames, captions, tokenizer,
-                 transforms, config):
+                 transforms, config, mode):
         self.image_filenames = image_filenames
         self.captions = list(captions)
         # Tokenize captions and pad/truncate them to max_length
@@ -20,6 +20,10 @@ class CLIPDataset(torch.utils.data.Dataset):
         )
         self.transforms = transforms
         self.config = config
+        if mode == "train":
+            self.image_path = self.config['train_image_path']
+        else:
+            self.image_path = self.config['test_image_path']
 
     # Returns a dictionary with tokenized captions, images, and captions
     def __getitem__(self, idx):
@@ -28,7 +32,7 @@ class CLIPDataset(torch.utils.data.Dataset):
             for key, values in self.encoded_captions.items()
         }
 
-        image_path = f"{self.config['image_path']}/{self.image_filenames[idx]}"
+        image_path = f"{self.image_path}/{self.image_filenames[idx]}"
         image = cv2.imread(image_path)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         image = self.transforms(image=image)['image']

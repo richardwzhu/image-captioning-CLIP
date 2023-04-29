@@ -13,6 +13,7 @@ from clip_utils import CLIPModel
 from train_eval_utils import train_epoch, valid_epoch
 
 
+entity = 'image-captioning-clip'
 project_name = 'image-captioning-CLIP'
 exp_name = 'exp_5'
 config = config_5
@@ -30,19 +31,19 @@ train_df = pd.concat([flickr8k_train_df, flickr30k_train_df])
 valid_df = pd.concat([flickr8k_valid_df, flickr30k_valid_df])
 tokenizer = DistilBertTokenizer.from_pretrained(config['text_tokenizer'])
 train_loader = build_loaders(train_df, tokenizer, mode="train", config=config)
-valid_loader = build_loaders(valid_df, tokenizer, mode="train", config=config)
+valid_loader = build_loaders(valid_df, tokenizer, mode="valid", config=config)
 
 # run = wandb.init()
-# artifact = run.use_artifact(f'richzhu/{project_name}/{exp_name}:latest',
+# artifact = run.use_artifact(f'{entity}/{project_name}/{exp_name}:latest',
 #                             type='model')
 # artifact_dir = artifact.download()
 # run.finish()
 
-run = wandb.init(project='image-captioning-CLIP', config=config)
+run = wandb.init(entity=entity, project=project_name, config=config)
 
 model = CLIPModel(config)
 # model.load_state_dict(torch.load(f'{artifact_dir}/{exp_name}.pt'))
-# model.to(device)
+model.to(device)
 
 params = [
     {"params": model.image_encoder.parameters(),

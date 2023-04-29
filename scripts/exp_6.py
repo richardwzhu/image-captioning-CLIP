@@ -7,23 +7,21 @@ from transformers import DistilBertTokenizer
 import sys
 sys.path.append('../src')
 from data_utils import preprocess, make_train_valid_dfs, build_loaders
-from config import config_3
+from config import config_6
 from clip_utils import CLIPModel
 from train_eval_utils import train_epoch, valid_epoch
 
 
 entity = 'image-captioning-clip'
 project_name = 'image-captioning-CLIP'
-exp_name = 'exp_3'
-config = config_3
+exp_name = 'exp_6'
+config = config_6
 device = config['device']
 print(f'{project_name=}\n{exp_name=}\n{device=}')
 print(f'{config=}')
 
-preprocess(config['train_raw_file_path'], 1)
-preprocess(config['test_raw_file_path'], 0)
-train_df, _ = make_train_valid_dfs(config["train_clean_file_path"], 0.8)
-_, valid_df = make_train_valid_dfs(config["test_clean_file_path"], 0.8)
+preprocess(config['raw_file_path'], 1)
+train_df, valid_df = make_train_valid_dfs(config["clean_file_path"], 0.8)
 tokenizer = DistilBertTokenizer.from_pretrained(config['text_tokenizer'])
 train_loader = build_loaders(train_df, tokenizer, mode="train", config=config)
 valid_loader = build_loaders(valid_df, tokenizer, mode="valid", config=config)
