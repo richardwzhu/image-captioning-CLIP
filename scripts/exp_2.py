@@ -2,7 +2,7 @@ import itertools
 import torch
 import wandb
 
-from transformers import DistilBertTokenizer
+from transformers import BertTokenizer
 
 import sys
 sys.path.append('../src')
@@ -12,6 +12,7 @@ from clip_utils import CLIPModel
 from train_eval_utils import train_epoch, valid_epoch
 
 
+entity = 'image-captioning-clip'
 project_name = 'image-captioning-CLIP'
 exp_name = 'exp_2'
 config = config_2
@@ -21,21 +22,21 @@ print(f'{config=}')
 
 preprocess(config['raw_file_path'], 1)
 train_df, valid_df = make_train_valid_dfs(config["clean_file_path"], 0.8)
-tokenizer = DistilBertTokenizer.from_pretrained(config['text_tokenizer'])
+tokenizer = BertTokenizer.from_pretrained(config['text_tokenizer'])
 train_loader = build_loaders(train_df, tokenizer, mode="train", config=config)
-valid_loader = build_loaders(valid_df, tokenizer, mode="train", config=config)
+valid_loader = build_loaders(valid_df, tokenizer, mode="valid", config=config)
 
 # run = wandb.init()
-# artifact = run.use_artifact(f'richzhu/{project_name}/{exp_name}:latest',
+# artifact = run.use_artifact(f'{entity}/{project_name}/{exp_name}:latest',
 #                             type='model')
 # artifact_dir = artifact.download()
 # run.finish()
 
-run = wandb.init(project='image-captioning-CLIP', config=config)
+run = wandb.init(entity=entity, project=project_name, config=config)
 
 model = CLIPModel(config)
 # model.load_state_dict(torch.load(f'{artifact_dir}/{exp_name}.pt'))
-# model.to(device)
+model.to(device)
 
 params = [
     {"params": model.image_encoder.parameters(),
