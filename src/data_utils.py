@@ -44,7 +44,8 @@ def build_loaders(df, tokenizer, mode, config):
         df["caption"].values,
         tokenizer=tokenizer,
         transforms=transforms,
-        config=config
+        config=config,
+        mode=mode
     )
     dataloader = torch.utils.data.DataLoader(
         dataset,
