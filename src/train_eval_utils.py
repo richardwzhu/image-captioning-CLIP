@@ -62,7 +62,7 @@ class AvgMeter:
         return text
 
 
-def get_captions(model, config, image_path, n):
+def get_captions(model, config, clean_file_path, image_path, n):
     device = config['device']
     model.eval()
 
@@ -76,7 +76,7 @@ def get_captions(model, config, image_path, n):
     with torch.no_grad():
         image_embedding = model.image_projection(model.image_encoder(image.to(device).unsqueeze(0)))
 
-    train_df, valid_df = make_train_valid_dfs(config["clean_file_path"], 0.8)
+    train_df, valid_df = make_train_valid_dfs(clean_file_path, 0.8)
     df = pd.concat([train_df, valid_df])
 
     captions = list(df.caption.values)
@@ -94,30 +94,36 @@ def get_captions(model, config, image_path, n):
 
     caption_embeddings = []
     # Project caption encodings to create embeddings
-    for input_id, attention_mask in captions_dataset:
+    top_k = []
+    i=0
+    for input_id, attention_mask in tqdm(captions_dataset):
+        i += 1
         caption_embedding = model.text_projection(model.text_encoder(
             input_ids=torch.tensor(input_id).to(device).unsqueeze(0),
             attention_mask=torch.tensor(attention_mask).to(device).unsqueeze(0)
         ))
-        caption_embeddings.append(caption_embedding)
+        cosine_similarity = torch.nn.functional.cosine_similarity(image_embedding, caption_embedding)
 
-    caption_embeddings = torch.cat(caption_embeddings, dim=0)
+        if len(top_k) == 0:
+            top_k.append((cosine_similarity, i))
+        elif len(top_k) < n:
+            for j in range(min(n, len(top_k))):
+                if cosine_similarity > top_k[j][0]:
+                    top_k.insert(j, (cosine_similarity, i))
+                    break
+        else:
+            for j in range(n):
+                if cosine_similarity > top_k[j][0]:
+                    top_k.insert(j, (cosine_similarity, i))
+                    top_k.pop()
+                    break
 
-    # Calculate cosine similarity scores between image embedding against all caption embeddings
-    cosine_similarities = torch.nn.functional.cosine_similarity(
-        image_embedding.repeat(caption_embeddings.shape[0], 1),
-        caption_embeddings
-    )
-
-    # Retrieve captions most similar based on cosine similarity
-    top_k_indices = cosine_similarities.argsort(descending=True)[:n]
-    top_k_captions = [captions[idx] for idx in top_k_indices]
-
+    top_k_captions = [captions[idx[1]] for idx in top_k]
     return top_k_captions
 
 
 def get_image_embeddings(model, config):
-    df, _ = make_train_valid_dfs(config["clean_file_path"], 1)
+    df, _ = make_train_valid_dfs(config['image_retrieval_path'], 1)
     if config["text_tokenizer"] == "distilbert-base-uncased":
         tokenizer = DistilBertTokenizer.from_pretrained(config['text_tokenizer'])
     else:
