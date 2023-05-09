@@ -11,9 +11,11 @@ from clip_utils import get_transforms
 from data_utils import build_loaders, make_train_valid_dfs
 
 
+# Train a model for a single epoch
 def train_epoch(model, train_loader, optimizer, lr_scheduler, step, device):
     loss_meter = AvgMeter()
     tqdm_object = tqdm(train_loader, total=len(train_loader))
+    # Iterate through batches of data
     for batch in tqdm_object:
         batch = {k: v.to(device) for k, v in batch.items() if k != "caption"}
         optimizer.zero_grad()
@@ -23,6 +25,7 @@ def train_epoch(model, train_loader, optimizer, lr_scheduler, step, device):
         if step == "batch":
             lr_scheduler.step()
 
+        # Update running loss for the epoch
         count = batch["image"].size(0)
         loss_meter.update(loss.item(), count)
 
@@ -30,13 +33,16 @@ def train_epoch(model, train_loader, optimizer, lr_scheduler, step, device):
     return loss_meter
 
 
+# Run a validation epoch for a model
 def valid_epoch(model, valid_loader, device):
     loss_meter = AvgMeter()
     tqdm_object = tqdm(valid_loader, total=len(valid_loader))
+    # Iterate through batches of data
     for batch in tqdm_object:
         batch = {k: v.to(device) for k, v in batch.items() if k != "caption"}
         loss = model(batch)
 
+        # Update running loss for the epoch
         count = batch["image"].size(0)
         loss_meter.update(loss.item(), count)
 
@@ -44,6 +50,7 @@ def valid_epoch(model, valid_loader, device):
     return loss_meter
 
 
+# Track the loss for an epoch
 class AvgMeter:
     def __init__(self, name="Metric"):
         self.name = name
@@ -62,7 +69,8 @@ class AvgMeter:
         return text
 
 
-def get_captions(model, config, image_path, n):
+# Retrieves n captions that most resemble the given image
+def get_captions(model, config, clean_file_path, image_path, n):
     device = config['device']
     model.eval()
 
@@ -73,51 +81,67 @@ def get_captions(model, config, image_path, n):
     image = transforms(image=image)['image']
     image = torch.tensor(image).permute(2, 0, 1).float()
 
+    # Calculate the embedding for the given image
     with torch.no_grad():
         image_embedding = model.image_projection(model.image_encoder(image.to(device).unsqueeze(0)))
 
-    train_df, valid_df = make_train_valid_dfs(config["clean_file_path"], 0.8)
+    # Create dataframe with all values
+    train_df, valid_df = make_train_valid_dfs(clean_file_path, 0.8)
     df = pd.concat([train_df, valid_df])
 
+    # Create a list of all captions from the dataframe
     captions = list(df.caption.values)
+
+    # Tokenize all captions from dataframe
     if config["text_tokenizer"] == "distilbert-base-uncased":
         tokenizer = DistilBertTokenizer.from_pretrained(config['text_tokenizer'])
     else:
         tokenizer = BertTokenizer.from_pretrained(config['text_tokenizer'])
-    # Tokenize all captions from dataframe
     encoded_captions = tokenizer(
         captions, padding=True, truncation=True,
         max_length=config["max_length"]
     )
 
+    # Split the input_ids and attention_mask for captions
     captions_dataset = list(zip(encoded_captions.input_ids, encoded_captions.attention_mask))
 
-    caption_embeddings = []
-    # Project caption encodings to create embeddings
-    for input_id, attention_mask in captions_dataset:
+    top_k = []
+    idx = 0
+    for input_id, attention_mask in tqdm(captions_dataset):
+        idx += 1
+        # Calculate the embedding for a single caption
         caption_embedding = model.text_projection(model.text_encoder(
             input_ids=torch.tensor(input_id).to(device).unsqueeze(0),
             attention_mask=torch.tensor(attention_mask).to(device).unsqueeze(0)
         ))
-        caption_embeddings.append(caption_embedding)
+        # Calculate the cosine similarity score between the image and the current caption
+        cosine_similarity = torch.nn.functional.cosine_similarity(image_embedding, caption_embedding)
 
-    caption_embeddings = torch.cat(caption_embeddings, dim=0)
+        # Check if the current caption has one of the n-highest cosine similarity scores and store it
+        if len(top_k) == 0:
+            top_k.append((cosine_similarity, idx))
+        elif len(top_k) < n:
+            for j in range(min(n, len(top_k))):
+                if cosine_similarity > top_k[j][0]:
+                    top_k.insert(j, (cosine_similarity, idx))
+                    break
+        else:
+            for j in range(n):
+                if cosine_similarity > top_k[j][0]:
+                    top_k.insert(j, (cosine_similarity, idx))
+                    top_k.pop()
+                    break
 
-    # Calculate cosine similarity scores between image embedding against all caption embeddings
-    cosine_similarities = torch.nn.functional.cosine_similarity(
-        image_embedding.repeat(caption_embeddings.shape[0], 1),
-        caption_embeddings
-    )
-
-    # Retrieve captions most similar based on cosine similarity
-    top_k_indices = cosine_similarities.argsort(descending=True)[:n]
-    top_k_captions = [captions[idx] for idx in top_k_indices]
-
+    # Return captions based highest similarity scores
+    top_k_captions = [captions[idx[1]] for idx in top_k]
     return top_k_captions
 
 
+# Calculates the image embeddings for all images
 def get_image_embeddings(model, config):
-    df, _ = make_train_valid_dfs(config["clean_file_path"], 1)
+    # Create dataframe with images stored at 'image_retrieval_path'
+    df, _ = make_train_valid_dfs(config['image_retrieval_path'], 1)
+
     if config["text_tokenizer"] == "distilbert-base-uncased":
         tokenizer = DistilBertTokenizer.from_pretrained(config['text_tokenizer'])
     else:
@@ -136,7 +160,9 @@ def get_image_embeddings(model, config):
     return df, torch.cat(image_embeddings)
 
 
+# Finds n-images that are most like the text query
 def find_matches(model, df, image_embeddings, config, query, n=9):
+    # Tokenize the text query
     if config["text_tokenizer"] == "distilbert-base-uncased":
         tokenizer = DistilBertTokenizer.from_pretrained(config['text_tokenizer'])
     else:
