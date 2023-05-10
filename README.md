@@ -83,10 +83,8 @@ python3 exp_0.py --entity image-captioning-clip --project_name image-captioning-
 ```
 
 ## Inference
+Follow the inference Jupyter notebooks.
 #### Image Captioning
-Reference image
-
-![6155176](https://github.com/richardwzhu/image-captioning-CLIP/assets/30671520/46dc4973-aa2d-4e56-ab97-9c6b9fe1c3ad)
 
 Code snippet from inference_0.ipynb
 ```
@@ -97,15 +95,6 @@ captions = get_captions(model, config, config['clean_file_path'], image_path, n)
 
 for caption in captions:
     print(caption)
-```
-
-Output
-```
-A child is looking through a fence or gate .
-Person watching a child as they play .
-Two individuals on a beach jumping up with their arms and legs spread wide open .
-A boy has climbed to the top of a slide .
-Two children are looking through a telescope on a city street , and the boy is using a step ladder to see through the eyeglass .
 ```
 
 #### Image Retrieval
@@ -119,7 +108,122 @@ query = "one dog sitting in grass"
 find_matches(model, df, image_embeddings, config, query)
 ```
 
-Output
+## Evaluation Results
+#### Image Captioning
+Reference image
 
-![output](https://github.com/richardwzhu/image-captioning-CLIP/assets/30671520/321f48ba-7d40-45b6-aabb-47ded256f243)
+![6155176](https://github.com/richardwzhu/image-captioning-CLIP/assets/30671520/46dc4973-aa2d-4e56-ab97-9c6b9fe1c3ad)
 
+Experiment 0 predictions:
+```
+A child is looking through a fence or gate .
+Person watching a child as they play .
+Two individuals on a beach jumping up with their arms and legs spread wide open .
+A boy has climbed to the top of a slide .
+Two children are looking through a telescope on a city street , and the boy is using a step ladder to see through the eyeglass .
+```
+Experiment 1 predictions:
+```
+The lights at night in the city .
+a white dog with brown and black markings frolics in snow .
+A man and a woman playfully fight and hang from support railings in a subway car .
+people stop and stare at a large statue .
+An officer in a reflective vest stands at the front of his van with his dog .
+```
+Experiment 2 predictions:
+```
+A baby in blue pants is sitting on a red slide .
+A person on a ladder with a baby underneath .
+A small child wearing light blue overalls sits on a red slide .
+Girl with green tank top standing in the middle of a train track with multicolor train cars to the right .
+Boy in yellow shirt sitting in yellow playground slide
+```
+Experiment 3 predictions:
+```
+A woman and baby are sitting in the window seat of a bus .
+A group of people in hazmat suits are standing with a dummy on a stretcher .
+A small boy wearing glasses and a hat is looking at something and smiling .
+A little boy puts his face up to the uniquely-shaped window .
+A little boy stands up next to a window and cries .
+```
+Experiment 4 predictions:
+```
+A small child at the bottom of a slide has hair sticking up .
+A boy in red slides down an inflatable ride .
+A small white dog is jumping over a branch on the ground covered with leaves .
+A girl going down a slide .
+A child with wild hair and sunglasses getting off a blue slide .
+```
+Experiment 5 predictions:
+```
+A woman watches her child play with a pair of sunglasses against a picture window .
+Person watching a child as they play .
+A laughing young boy is near a swimming pool .
+A child is looking through a pretend telescope on playground equipment in front of a blue sky .
+A child with wild hair and sunglasses getting off a blue slide .
+```
+Experiment 6 predictions:
+```
+A young person with red-hair and a green shirt peers into his telescope .
+A little toddler trying to look through a scope but ca n't reach it .
+A child looking through a telescope on a playground .
+A boy has climbed to the top of a slide .
+A man in a blue shirt is holding a young boy and looking through a telescope .
+```
+
+Using these reference captions:
+```
+little boy looking through a telescope on playground equipment with the sun glaring off the pole his hand is on .
+A child is looking through a pretend telescope on playground equipment in front of a blue sky .
+A little blond boy is looking through a yellow telescope .
+A child looking through a telescope on a playground .
+A kid with blond-hair using a telescope .
+```
+
+The BLEU score obtained for each experiment is:
+
+<img width="331" alt="Screenshot 2023-05-10 at 12 46 03 PM" src="https://github.com/richardwzhu/image-captioning-CLIP/assets/30671520/a1e4e938-bda4-4d49-bcd9-96c793bf90be">
+
+#### Image Retrieval
+Text query: "one dog sitting in grass"
+
+Experiment 0 images:
+
+![0](https://github.com/richardwzhu/image-captioning-CLIP/assets/30671520/942696fc-b938-41cc-ac00-3fdb65a3c5e8)
+
+Experiment 1 images:
+
+![1](https://github.com/richardwzhu/image-captioning-CLIP/assets/30671520/2e9538cb-d5ce-4189-be77-bdc654f36f1f)
+
+Experiment 2 images:
+
+![2](https://github.com/richardwzhu/image-captioning-CLIP/assets/30671520/4beb71c6-fcb9-44e4-a25f-3ca5c9076264)
+
+Experiment 3 images:
+
+![3](https://github.com/richardwzhu/image-captioning-CLIP/assets/30671520/5bf38015-5dcc-411f-a3fa-12fbe6123f2c)
+
+Experiment 4 images:
+
+![4](https://github.com/richardwzhu/image-captioning-CLIP/assets/30671520/31b2c2a1-3c79-4b40-9263-ee7355189f0f)
+
+Experiment 5 images:
+
+![5](https://github.com/richardwzhu/image-captioning-CLIP/assets/30671520/3138b981-32f6-48dc-bee3-1a3c27833a91)
+
+Experiment 6 images:
+
+![6](https://github.com/richardwzhu/image-captioning-CLIP/assets/30671520/2cef761a-e5c1-4488-aec4-c6f43c7050a7)
+
+## Observations
+Takeaways:
+- Models trained with more data are more robust and generalize better.
+    - Experiment 5 achieved the best performance using a combined flickr8k and flickr30k dataset.
+    - Experiment 1 had the worst performance and its image encoder was ResNet50 self-trained on CIFAR-10, a much smaller dataset than ImageNet.
+- Given the poor performance of experiments 3 and 4, flickr8k and flickr30k may have different linguistic and visual patterns/distributions in their captions and images that offset data embeddings and negatively impact model performance.
+- Experiment 2 uses Hugging Face's BERT rather than DistillBERT and achieved very poor performance. So larger and more expensive architectures take longer to train and do not necessarily have good performance. However, they may outperform smaller architectures when given more time to converge.
+- Experiment 6 used a high "temperature" CLIP parameter, which increases the randomness/creativity of the model's prediction, and had better performance than our baseline. Image captioning involves creative writing, so diversity in responses may be rewarded.
+
+Next Steps:
+- Acquire more training data and increase the topical diversity in both images and captions
+- Train all models, especially those with larger architectures, for longer to improve model convergence and performance
