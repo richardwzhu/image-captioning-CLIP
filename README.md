@@ -10,8 +10,8 @@ We built six different models based on CLIP from scratch using PyTorch. The mode
 0. Pre-trained ResNet50, Hugging Face DistillBERT, Flickr30k
 1. Self-trained ResNet50 on CIFAR-10, Hugging Face DistillBert, Flickr30k
 2. Pre-trained ResNet50, Hugging Face BERT, Flickr30k
-3. Pre-trained ResNet50, Hugging Face DistillBERT, Train on Flickr30k, Train on Flickr8k
-4. Pre-trained ResNet50, Hugging Face DistillBERT, Train on Flickr8k, Train on Flickr30k
+3. Pre-trained ResNet50, Hugging Face DistillBERT, Train on Flickr30k, Test on Flickr8k
+4. Pre-trained ResNet50, Hugging Face DistillBERT, Train on Flickr8k, Test on Flickr30k
 5. Pre-trained ResNet50, Hugging Face DistillBERT, Flickr30k + Flickr8k
 5. Pre-trained ResNet50, Hugging Face DistillBERT, Increased “temperature”
 ```
@@ -36,6 +36,8 @@ We evaluated the quality of the machine-generated captions using the [BLEU metri
 |       ├── flickr30k 
 |           ├── results.csv # Raw flickr30k captions
 |           ├── Images/ # Folder of flickr30k images
+|       ├── combined/
+|           ├── Images/ # Folder of combined flickr8k and flickr30k images
 ├── models/ # Where lcoal PyTorch model checkpoints are stored
 ├── notebooks/ # Jupyter noteboks
 |   ├── bleu.ipynb # Evaluting quality of machine-generated captions using BLEU metric
