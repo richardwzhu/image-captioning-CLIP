@@ -219,10 +219,10 @@ Experiment 6 images:
 Takeaways:
 - Models trained with more data are more robust and generalize better.
     - Experiment 5 achieved the best performance using a combined flickr8k and flickr30k dataset.
-    - Experiment 1 had the worst performance and its image encoder was ResNet50 self-trained on CIFAR-10, a much smaller dataset than ImageNet.
-- Given the poor performance of experiments 3 and 4, flickr8k and flickr30k may have different linguistic and visual patterns/distributions in their captions and images that offset data embeddings and negatively impact model performance.
-- Experiment 2 uses Hugging Face's BERT rather than DistillBERT and achieved very poor performance. So larger and more expensive architectures take longer to train and do not necessarily have good performance. However, they may outperform smaller architectures when given more time to converge.
-- Experiment 6 used a high "temperature" CLIP parameter, which increases the randomness/creativity of the model's prediction, and had better performance than our baseline. Image captioning involves creative writing, so diversity in responses may be rewarded.
+    - Experiment 1 had poor performance since its image encoder was trained on a much smaller dataset.
+- Given the poor performance of experiments 3 and 4, flickr8k and flickr30k may have different linguistic and visual patterns/distributions that offset caption and image embeddings in the projection space.
+- Larger architectures, like in experiment 2, do not necessarily have good performance, take longer to train, and reach convergence later.
+- Model performance is noticeably impacted by the level of randomness/creativity in the responses. Since image captioning involves creative writing, increased diversity and novelty may be rewarded.
 
 Next Steps:
 - Acquire more training data and increase the topical diversity in both images and captions
