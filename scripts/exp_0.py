@@ -16,8 +16,7 @@ from train_eval_utils import train_epoch, valid_epoch
 def main():
     config = default_config
     device = config['device']
-    print(f'{project_name=}\n{exp_name=}\n{device=}')
-    print(f'{config=}')
+    print(f'{config=}\n{device=}')
 
     preprocess(config['raw_file_path'], 1)
     train_df, valid_df = make_train_valid_dfs(config["clean_file_path"], 0.8)
@@ -26,6 +25,7 @@ def main():
     valid_loader = build_loaders(valid_df, tokenizer, mode="valid", config=config)
 
     if entity is not None and project_name is not None and exp_name is not None:
+        print(f'{entity=}\n{project_name=}\n{exp_name=}')
         # run = wandb.init()
         # artifact = run.use_artifact(f'{entity}/{project_name}/{exp_name}:latest',
         #                             type='model')
@@ -40,9 +40,9 @@ def main():
 
     params = [
         {"params": model.image_encoder.parameters(),
-        "lr": config['image_encoder_lr']},
+            "lr": config['image_encoder_lr']},
         {"params": model.text_encoder.parameters(),
-        "lr": config['text_encoder_lr']},
+            "lr": config['text_encoder_lr']},
         {"params": itertools.chain(
             model.image_projection.parameters(), model.text_projection.parameters()
         ), "lr": config['projection_head_lr'],
@@ -60,7 +60,7 @@ def main():
         print(f"Epoch: {epoch + 1}")
         model.train()
         train_loss = train_epoch(model, train_loader, optimizer, lr_scheduler,
-                                step, device)
+                                 step, device)
         model.eval()
         with torch.no_grad():
             valid_loss = valid_epoch(model, valid_loader, device)
@@ -90,7 +90,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--project_name",
-        default='image-captioning-CLIP',
+        default=None,
         type=str,
         help="WandB project name",
     )
