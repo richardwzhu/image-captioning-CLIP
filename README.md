@@ -180,7 +180,7 @@ A child looking through a telescope on a playground .
 A kid with blond-hair using a telescope .
 ```
 
-The BLEU score obtained for each experiment is:
+The BLEU score obtained for each experiment was:
 
 <img width="331" alt="Screenshot 2023-05-10 at 12 46 03 PM" src="https://github.com/richardwzhu/image-captioning-CLIP/assets/30671520/a1e4e938-bda4-4d49-bcd9-96c793bf90be">
 
