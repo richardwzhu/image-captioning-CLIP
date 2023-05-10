@@ -62,3 +62,10 @@ We evaluated the quality of the machine-generated captions using the [BLEU metri
 |   ├── data_utils.py # Functions to preprocess and transform the data
 |   ├── train_eval_utils.py # Training and inference functions
 ```
+
+## Environment Setup
+1. Make sure your python version is `3.7+`
+2. Install dependencies with `pip`:
+```
+pip install -r requirements.txt
+```
