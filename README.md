@@ -71,3 +71,55 @@ We evaluated the quality of the machine-generated captions using the [BLEU metri
 ```
 pip install -r requirements.txt
 ```
+## Training
+Train CLIP model
+```
+python3 exp_0.py
+```
+
+With storing model artifacts in WandB
+```
+python3 exp_0.py --entity image-captioning-clip --project_name image-captioning-CLIP --exp_name exp_0
+```
+
+## Inference
+#### Image Captioning
+Reference image
+
+![6155176](https://github.com/richardwzhu/image-captioning-CLIP/assets/30671520/46dc4973-aa2d-4e56-ab97-9c6b9fe1c3ad)
+
+Code snippet from inference_0.ipynb
+```
+image_path = '../input/raw/flickr30k/Images/6155176.jpg'
+
+n = 5
+captions = get_captions(model, config, config['clean_file_path'], image_path, n)
+
+for caption in captions:
+    print(caption)
+```
+
+Output
+```
+A child is looking through a fence or gate .
+Person watching a child as they play .
+Two individuals on a beach jumping up with their arms and legs spread wide open .
+A boy has climbed to the top of a slide .
+Two children are looking through a telescope on a city street , and the boy is using a step ladder to see through the eyeglass .
+```
+
+#### Image Retrieval
+
+Code snippet from inference_0.ipynb
+```
+df, image_embeddings = get_image_embeddings(model, config)
+
+query = "one dog sitting in grass"
+
+find_matches(model, df, image_embeddings, config, query)
+```
+
+Output
+
+![output](https://github.com/richardwzhu/image-captioning-CLIP/assets/30671520/321f48ba-7d40-45b6-aabb-47ded256f243)
+
