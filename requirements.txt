@@ -1,0 +1,14 @@
+albumentations
+opencv-python
+timm
+torch
+torchvision
+transformers
+numpy
+pandas
+matplotlib
+wandb
+evaluate
+Pillow
+tqdm
+ssl
