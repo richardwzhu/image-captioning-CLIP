@@ -11,4 +11,3 @@ wandb
 evaluate
 Pillow
 tqdm
-ssl
